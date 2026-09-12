@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Parcourir les annonces — SLA3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="wrap section" style="padding-top:2rem;">
+    <h1 class="page-title" id="page-title">Toutes les annonces</h1>
+    <p class="page-sub" id="result-count"></p>
+
+    <div style="margin-top:1.25rem;">
+      <div class="cat-pills" id="cat-pills"></div>
+    </div>
+
+    <div class="browse-layout">
+      <form id="filter-form" method="get" action="parcourir.html">
+        <input type="hidden" name="q" id="hidden-q" />
+        <input type="hidden" name="categorie" id="hidden-categorie" />
+
+        <div class="filter-group">
+          <p class="label">Ville</p>
+          <div id="city-filters"></div>
+        </div>
+
+        <div class="filter-group">
+          <p class="label">État</p>
+          <div id="condition-filters"></div>
+        </div>
+
+        <button type="submit" class="btn btn-block" style="background:var(--ink); color:var(--paper);">Filtrer</button>
+        <a href="parcourir.html" class="form-note" style="display:block;">Réinitialiser</a>
+      </form>
+
+      <div>
+        <div class="product-grid" id="results-grid"></div>
+        <div class="empty-state" id="empty-state" style="display:none;">
+          <p>Aucune annonce ne correspond à ces filtres.</p>
+          <a href="parcourir.html" class="link-majorelle">Voir toutes les annonces</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/patterns.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const params = getQueryParams();
+      const { q, categorie, ville, etat } = params;
+
+      renderCategoryPills(document.getElementById("cat-pills"), categorie);
+      document.getElementById("hidden-q").value = q || "";
+      document.getElementById("hidden-categorie").value = categorie || "";
+
+      document.getElementById("city-filters").innerHTML = CITIES.slice(0, 6).map((c) => `
+        <label>
+          <input type="radio" name="ville" value="${c}" ${ville === c ? "checked" : ""} />
+          ${c}
+        </label>
+      `).join("");
+
+      document.getElementById("condition-filters").innerHTML = CONDITIONS.map((c) => `
+        <label>
+          <input type="radio" name="etat" value="${c}" ${etat === c ? "checked" : ""} />
+          ${c}
+        </label>
+      `).join("");
+
+      const activeCat = CATEGORIES.find((c) => c.slug === categorie);
+      document.getElementById("page-title").textContent = activeCat ? activeCat.label : "Toutes les annonces";
+
+      const filtered = PRODUCTS.filter((p) => {
+        if (categorie && p.category !== categorie) return false;
+        if (ville && p.city !== ville) return false;
+        if (etat && p.condition !== etat) return false;
+        if (q && !p.title.toLowerCase().includes(q.toLowerCase())) return false;
+        return true;
+      });
+
+      document.getElementById("result-count").textContent =
+        `${filtered.length} article${filtered.length > 1 ? "s" : ""}${q ? ` pour « ${q} »` : ""}`;
+
+      const grid = document.getElementById("results-grid");
+      const empty = document.getElementById("empty-state");
+      if (filtered.length === 0) {
+        grid.style.display = "none";
+        empty.style.display = "block";
+      } else {
+        grid.innerHTML = filtered.map(productCardHTML).join("");
+      }
+    });
+  </script>
+</body>
+</html>
